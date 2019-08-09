@@ -1,2 +1,0 @@
-set(project fftwf.3.3.4)
-set(is_third_party TRUE)

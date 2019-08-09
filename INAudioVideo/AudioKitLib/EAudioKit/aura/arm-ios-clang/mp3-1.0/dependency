@@ -1,2 +1,0 @@
-set(project mp3.1.0)
-set(frameworks lame.3.99.5 shine.3.1.0)
