@@ -265,6 +265,34 @@ typedef struct
     self.frame = self.frame;
 }
 
+#pragma mark - 初始化下所有的默认的绘制的
+
+-(void)initDefaultBuffer{
+    float src[1];
+    src[0] =  0.0;
+    for (int i = 0; i < self.info->historyInfo->bufferSize; i++) {
+        [EZAudioUtilities appendBufferRMS:src
+                           withBufferSize:1
+                            toHistoryInfo:self.info->historyInfo];
+    }
+}
+
+- (void)updateBuffer:(float *)buffer withBufferRMSSize:(UInt32)bufferSize{
+    
+    float src[1];
+    src[0] =  0.0;
+    for (int i = 0; i < bufferSize; i++) {
+        src[0] = buffer[i];
+        [EZAudioUtilities appendBufferRMS:src
+                           withBufferSize:1
+                            toHistoryInfo:self.info->historyInfo];
+    }
+    [self setSampleData:self.info->historyInfo->buffer
+                 length:self.info->historyInfo->bufferSize];
+}
+
+
+
 //------------------------------------------------------------------------------
 #pragma mark - Updating The Plot
 //------------------------------------------------------------------------------

@@ -17,6 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong) UILabel *nameLab;
 @property(nonatomic, strong) UILabel *timeLab;
 @property(nonatomic, strong) UILabel *dateTimeLab;
+@property(nonatomic, strong) UILabel *sizeLab;
+@property(nonatomic, strong) UILabel *flagLab;
 @property(nonatomic, strong) CustomImgLabBtn *renameBtn;
 @property(nonatomic, strong) CustomImgLabBtn *deleteBtn;
 @property(nonatomic,strong) NSIndexPath *indexPath;

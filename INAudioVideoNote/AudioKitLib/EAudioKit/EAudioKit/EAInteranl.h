@@ -83,6 +83,7 @@ typedef void (^BaseOffsetBlockTask)(void);
     EAudioFileRecorder*  _continueRecord;  //绪录音 重新打个录音文件然后继续录音
     EAudioRenderBufferRecorder* _bufferRecorder; //錄製音源的聲音
     EAudioPcmFile* _rawRecorder;
+    BOOL           _isPauseRowRecordForPlay;     //true : 在试听阶段  no : 在录音阶段
     NSMutableArray*     _taskArray;
     NSMutableArray*     _baseOffsetTaskArray;
     

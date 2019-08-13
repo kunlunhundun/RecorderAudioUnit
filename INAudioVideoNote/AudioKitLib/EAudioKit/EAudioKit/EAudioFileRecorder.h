@@ -46,6 +46,18 @@ NS_ASSUME_NONNULL_BEGIN
  */
 +(BOOL)cutFile:(NSString*)inputFilePath  outputFilePath:(NSString*)outputFilePath startTime:(NSTimeInterval)startTime endTime:(NSTimeInterval)endTime durationTime:(NSTimeInterval)durationTime;
 
+-(BOOL)openExAudioFile:(NSString*)filePath bufferSize:(UInt32)bufferSize;
+/**
+ 读取音频文件，音频数据会以回调的方式返回上去
+ */
+-(BOOL)getReadFileData;
+
+/**
+ 文件格式转换 wav-mp3 wav-m4a  m4a-wav
+ */
++(BOOL)oneFormatToAudioFile:(NSString*)inputFile targetAudioFile:(NSString*)audioFile;
+
+
 @end
 
 NS_ASSUME_NONNULL_END

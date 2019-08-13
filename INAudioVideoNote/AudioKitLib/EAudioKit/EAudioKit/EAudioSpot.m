@@ -164,11 +164,10 @@ static OSStatus audioUnitRenderCallback(void* inRefCon,
 -(void)startRecordMutableFormatPath:(NSString*)saveRecordPath{
     
     _bufferRecorder = [[EAudioRenderBufferRecorder alloc] init];
-    AudioStreamBasicDescription defaultStreamFormat = _audioSourceFormat;//[AudioStreamBasicDescriptions nonInterleavedFloatStereoAudioDescription];
+    AudioStreamBasicDescription defaultStreamFormat = _audioSourceFormat;
     BOOL bSetup = [_bufferRecorder setup:saveRecordPath AudioStreamFormat:defaultStreamFormat enableSynWrite:NO];
     if (bSetup) {
         NSLog(@"recording begin...bSetup:%d\n",bSetup);
-        
     }
 }
 
@@ -176,6 +175,9 @@ static OSStatus audioUnitRenderCallback(void* inRefCon,
     
     [_bufferRecorder close];
     _bufferRecorder = nil;
+    [_rawRecorder close];
+    _rawRecorder = nil;
+    _isPauseRowRecordForPlay = false;
 }
 
 -(void)startRecordContinueFilePath:(NSString*)recordPath{
@@ -192,6 +194,25 @@ static OSStatus audioUnitRenderCallback(void* inRefCon,
 -(void)resetRecordContinue{
     [_continueRecord resetToOriginalFile];
     _continueRecord = nil;
+}
+
+
+
+-(void)pauseRowRecordForPlay:(BOOL)isPause
+{
+    _isPauseRowRecordForPlay = isPause;
+    if (isPause == true) {
+        [_rawRecorder seekFileStart];
+    }else{
+        [_rawRecorder seekFileEnd];
+    }
+}
+-(void)startRecordRawReadWrite:(NSString*)savePath{
+    
+    if (_rawRecorder == nil) {
+        _rawRecorder = [[EAudioPcmFile alloc] initWithPathForReadWrite:savePath AudioStreamFormat:_audioSourceFormat ];
+        NSLog(@"EAudioSpot[%@] start rawRecording...",_name);
+    }
 }
 
 
@@ -429,6 +450,15 @@ static OSStatus audioUnitRenderCallback(void* inRefCon,
     assert(inNumberFrames == ioData->mBuffers[0].mDataByteSize/_audioSourceFormat.mBytesPerFrame);
     
     [self execuseBlockTask];
+    
+    if (_isPauseRowRecordForPlay) { //试听阶段
+       int readFrames =  [_rawRecorder audioFileRead:ioData inNumberFrames:inNumberFrames];
+        if (readFrames == 0) {
+            [EAudioMisc fillSilence:ioData];
+        }
+        return noErr;
+    }
+    
     if (_microphone) {//将mic的数据填入，回话mic的声音
         TIME_SLAPS_TRACER("microphone feedAudioBuffer",0.005);
         int frameRender = [_microphone renderAudioToBuffer:inTimeStamp inNumberFrames:inNumberFrames AudioBufferList:ioData];

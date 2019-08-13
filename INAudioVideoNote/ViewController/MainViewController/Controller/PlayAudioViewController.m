@@ -16,6 +16,7 @@
 #import "ContinueRecordViewController.h"
 #import "AudioCutViewController.h"
 #import "MarkCollectionView.h"
+#import "ConvertPopView.h"
 
 
 
@@ -33,6 +34,7 @@
 @property(nonatomic,assign) NSInteger durationTime;
 @property(nonatomic,strong) UISlider *playSlider ;
 @property(nonatomic,strong) UIDocumentInteractionController *documentController;
+@property(nonatomic,strong) UIView  *plotGLBackView;
 
 @end
 
@@ -70,12 +72,22 @@
 }
 
 -(void)initAudioPlotGL{
-    _audioPlotGLView = [[EZAudioPlotGL alloc]initWithFrame:CGRectZero];
-    [self.view addSubview:_audioPlotGLView];
-    [_audioPlotGLView mas_makeConstraints:^(MASConstraintMaker *make) {
+    
+    UIView *plotGLBackView = [[UIView alloc]initWithFrame:CGRectZero];
+    [self.view addSubview:plotGLBackView];
+    _plotGLBackView = plotGLBackView;
+    plotGLBackView.backgroundColor = UIColorFromRGB(0x151515);
+    [plotGLBackView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.equalTo(self.view);
         make.top.equalTo(self.view).offset(0);
         make.height.mas_equalTo(220);
+    }];
+    
+    _audioPlotGLView = [[EZAudioPlotGL alloc]initWithFrame:CGRectZero];
+    [plotGLBackView addSubview:_audioPlotGLView];
+    [_audioPlotGLView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.top.bottom.equalTo(plotGLBackView);
+        make.width.mas_equalTo(IN_IPHONE_WIDTH/2);
     }];
     _audioPlotGLView.backgroundColor = UIColorFromRGB(0x151515);
     _audioPlotGLView.color           =  UIColorFromRGB(0xFF5700);
@@ -83,6 +95,25 @@
     _audioPlotGLView.shouldFill      = YES;
     _audioPlotGLView.shouldMirror    = YES;
     _audioPlotGLView.gain = 2.5f;
+    [_audioPlotGLView initDefaultBuffer];
+
+    
+    UIView *midHorLineView = [[UIView alloc]initWithFrame:CGRectZero];
+    [plotGLBackView addSubview:midHorLineView];
+    midHorLineView.backgroundColor = UIColorFromRGB(0x3C3226);
+    [midHorLineView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.equalTo(plotGLBackView);
+        make.height.mas_equalTo(1);
+        make.centerY.equalTo(plotGLBackView.mas_centerY);
+    }];
+    UIView *midVerLineView = [[UIView alloc]initWithFrame:CGRectZero];
+    [plotGLBackView addSubview:midVerLineView];
+    midVerLineView.backgroundColor = UIColorFromRGB(0xFF5700);
+    [midVerLineView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.bottom.top.equalTo(plotGLBackView);
+        make.centerX.equalTo(plotGLBackView.mas_centerX);
+        make.width.mas_equalTo(1);
+    }];
 }
 
 
@@ -98,10 +129,10 @@
 
     UIView *sliderView = [[UIView alloc]initWithFrame:CGRectZero];
     [self.view addSubview:sliderView];
-    sliderView.backgroundColor = UIColorFromRGB(0x151515);
+    sliderView.backgroundColor = UIColorFromRGB(0x121212);
     [sliderView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.equalTo(self.view);
-        make.top.equalTo(self.audioPlotGLView.mas_bottom);
+        make.top.equalTo(self.plotGLBackView.mas_bottom);
         make.height.mas_equalTo(30);
     }];
     UISlider *playSlider = [[UISlider alloc] initWithFrame:CGRectMake(0,0,IN_IPHONE_WIDTH,30)];
@@ -193,6 +224,24 @@
         make.width.mas_equalTo(74);
         make.height.mas_equalTo(38);
     }];
+    
+    CustomImgLabBtn *convertBtn = [[CustomImgLabBtn alloc]initWithFrame:CGRectMake(0, 0, 74, 38)];
+    [self.view addSubview:convertBtn];
+    convertBtn.backgroundColor = UIColorFromRGB(0x3B3B4D);
+    convertBtn.layer.cornerRadius = 19;
+    convertBtn.clipsToBounds = true;
+    [convertBtn setTitle:@"转码" forState:UIControlStateNormal];
+    [convertBtn setImage:[UIImage imageNamed:@"button_microphone_grey"] forState:UIControlStateNormal];
+    [convertBtn addTarget:self action:@selector(convertAction) forControlEvents:UIControlEventTouchUpInside];
+    [convertBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.equalTo(playBtn.mas_centerX);
+        make.centerY.equalTo(playBtn.mas_bottom).offset(45);
+        make.width.mas_equalTo(74);
+        make.height.mas_equalTo(38);
+    }];
+    
+   
+    
 }
 
 -(void)initAudio{
@@ -242,6 +291,45 @@
     }
 }
 
+-(void)convertAction{
+    NSString *filePath = [FilePathManager  getAudioFileRecordPath];
+    NSString *filePathName = [NSString stringWithFormat:@"%@%@",filePath,_fileName];
+    
+    NSString *format = [_fileName pathExtension];
+    NSString *noformatName = [_fileName substringToIndex:_fileName.length-4];
+    __weak typeof (self) weakSelf = self;
+    [ConvertPopView showSelectTitle:format titleIndexBlock:^(NSString * _Nonnull title) {
+        
+        NSString *targetFormat = [title substringFromIndex:title.length-3];
+        if ([targetFormat isEqualToString:format]) {
+            return ;
+        }
+        NSString *targetPathName = [NSString stringWithFormat:@"%@%@.%@",filePath,noformatName,targetFormat];
+        BOOL isSucess = [EAudioFileRecorder oneFormatToAudioFile:filePathName targetAudioFile:targetPathName];
+        if (isSucess) {
+            NSArray *dataArr =  [FilePathManager getArchiverModel];
+            NSMutableArray *newDataArr = [NSMutableArray arrayWithCapacity:1];
+            [newDataArr addObjectsFromArray:dataArr];
+            for (AudioInfoModel *infoModel in  dataArr){
+                if ([infoModel.fileName isEqualToString:weakSelf.fileName]){
+                    AudioInfoModel *newInfoModel = [[AudioInfoModel alloc]init];
+                    newInfoModel.markTime = infoModel.markTime;
+                    newInfoModel.dateTime = infoModel.dateTime;
+                    newInfoModel.durationTime = infoModel.durationTime;
+                    newInfoModel.fileName = [NSString stringWithFormat:@"%@.%@",noformatName,targetFormat];
+                    [newDataArr insertObject:newInfoModel atIndex:0];
+                    break;
+                }
+            }
+
+            [FilePathManager updateArchiverModel:[NSMutableArray arrayWithArray:newDataArr]];
+            //[FilePathManager deleteFileName:filePathName];
+        }
+        
+    }];
+    
+}
+
 -(void)pausePlay{
     [_audioGraph stopGraph];
     _isPause = true;
@@ -267,7 +355,7 @@
 }
 
 -(void)onDragSlider:(UISlider*)slider{
-    self.startTime =  slider.value / 20 * self.durationTime;
+    self.startTime =  slider.value / 50 * self.durationTime;
     self.timeCount = self.startTime;
     [_audioGraph setCurrentTime:self.startTime];
     [self startPlay];
@@ -292,7 +380,7 @@
 
 - (void)startTimer {
     if (!_timer) {
-        _timer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:self selector:@selector(timerEvent) userInfo:nil repeats:YES];
+        _timer = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(timerEvent) userInfo:nil repeats:YES];
         [_timer fire];
         [[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
     }
@@ -310,9 +398,8 @@
     if (_isPause == true) {
         return ;
     }
-   // self.timeCount += 1;
+    self.playSlider.value = self.audioSpot.currentTime * 50 / self.durationTime;
     self.timeCount = self.audioSpot.currentTime;
-    self.playSlider.value = self.timeCount * 50 / self.durationTime;
     NSInteger minutes = self.timeCount / 60;
     NSInteger seconds =  self.timeCount % 60;
     NSInteger hours = minutes / 60;

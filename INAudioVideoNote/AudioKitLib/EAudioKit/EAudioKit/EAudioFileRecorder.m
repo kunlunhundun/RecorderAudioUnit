@@ -34,6 +34,7 @@
     BOOL             _isReset;
     NSTimeInterval  _duration;
     float           *_outFloatData;
+    AudioBufferList *_readBufferList;
 
 }
 
@@ -399,7 +400,7 @@
 
 
 
--(BOOL)openExAudioFile:(NSString*)filePath{
+-(BOOL)openExAudioFile:(NSString*)filePath bufferSize:(UInt32)bufferSize{
     
     ExtAudioFileRef audioFileRef;
     AudioFileID audioFileID;
@@ -410,6 +411,7 @@
     OSStatus err = ExtAudioFileOpenURL((__bridge CFURLRef)url, &audioFileRef);
     CHECK_ERROR_MSG_RET_NO(err,"ExtAudioFileOpenURL failed");
     _extAudioFile = audioFileRef;
+    _clientFormat = clientFormat;
   //  _clientFormat = clientFormat;
     
     UInt32 propSize = sizeof(audioFileID);
@@ -447,37 +449,61 @@
     err = AudioFileGetProperty(audioFileID, kAudioFilePropertyAudioDataPacketCount, &propSize, &packetCount);
     CHECK_ERROR(err,"AudioFileGetProperty kAudioFilePropertyAudioDataPacketCount failed");
     
+    
+    
+    
     UInt32 inNumberFrames = 1024;
     UInt32 framesCount = inNumberFrames;
-    AudioBufferList *bufferList = AEAllocateAndInitAudioBufferList(clientFormat, inNumberFrames);
-    
-    
-   
-    
+    _readBufferList = AEAllocateAndInitAudioBufferList(clientFormat, inNumberFrames);
+    UInt32 readCount = 0;
+
+    float emptyBuffer[1];
+    emptyBuffer[0] = 0.0f;
     while (1) {
         OSStatus status =  ExtAudioFileRead(audioFileRef,
                                             &framesCount,
-                                            bufferList);
+                                            _readBufferList);
         CHECK_ERROR_MSG_RET_NO(status,"ExtAudioFileRead audioFileRef failed");
         
         if (self.eaudioReadFileOutputBlock) {
             if (_outFloatData == NULL ) {
-                _outFloatData =  (float*)calloc(4096, sizeof(char));
-                memset(_outFloatData, 0, sizeof(char)*4096);
+                _outFloatData = (float*)calloc(bufferSize, sizeof(float));
+                memset(_outFloatData, 0, sizeof(float)*bufferSize);
             }
-            memcpy(_outFloatData, bufferList->mBuffers[0].mData, bufferList->mBuffers[0].mDataByteSize);
-            self.eaudioReadFileOutputBlock(_outFloatData, inNumberFrames);
+          float sumBuffer = [self RMS:(float*)_readBufferList->mBuffers[0].mData length:_readBufferList->mBuffers[0].mDataByteSize/4];
+            readCount ++ ;
+           // memcpy(_outFloatData, _readBufferList->mBuffers[0].mData, _readBufferList->mBuffers[0].mDataByteSize);
+            if (readCount < bufferSize) {
+                _outFloatData[readCount] = isnan(sumBuffer) ? 0.0 : sumBuffer;;
+            }else{
+                framesCount = 0;
+            }
         }
-        
         if (framesCount==0) {
+            
+            self.eaudioReadFileOutputBlock(_outFloatData, bufferSize);
             ExtAudioFileDispose(audioFileRef);
             audioFileRef = nil;
+            AEFreeAudioBufferList(_readBufferList);
             printf("Done reading from input file\n");
             break;
         }
     }
+   
     return true;
 }
+
+
+
+
+- (float)RMS:(float *)buffer   length:(int)bufferSize
+{
+    float sum = 0.0;
+    for(int i = 0; i < bufferSize; i++)
+        sum += buffer[i] * buffer[i];
+    return sqrtf( sum / bufferSize);
+}
+
 
 
 
@@ -830,6 +856,76 @@
     outputAudioFileRef = nil;
     AEFreeAudioBufferList(bufferList);
     return true;
+}
+
+//格式转换
++(BOOL)oneFormatToAudioFile:(NSString*)inputFile targetAudioFile:(NSString*)audioFile
+{
+    AudioStreamBasicDescription format;
+    memset(&format, 0, sizeof(format));
+    ExtAudioFileRef audioFileRef;
+    AudioFileID audioFileID;
+    
+    AudioStreamBasicDescription clientFormat = [AudioStreamBasicDescriptions nonInterleavedFloatStereoAudioDescription];
+    
+    NSURL* url = [NSURL fileURLWithPath:inputFile];
+    OSStatus err = ExtAudioFileOpenURL((__bridge CFURLRef)url, &audioFileRef);
+    CHECK_ERROR_MSG_RET_NO(err,"ExtAudioFileOpenURL failed");
+    
+    UInt32 propSize = sizeof(audioFileID);
+    err = ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_AudioFile, &propSize, &audioFileID);
+    CHECK_ERROR(err,"ExtAudioFileGetProperty kExtAudioFileProperty_AudioFile failed");
+    
+    AudioStreamBasicDescription audioFileFormat;
+    propSize = sizeof(audioFileFormat);
+    err = AudioFileGetProperty(audioFileID, kAudioFilePropertyDataFormat, &propSize, &audioFileFormat);
+    CHECK_ERROR_MSG_RET_NO(err,"AudioFileGetProperty kAudioFilePropertyDataFormat failed");
+    // Apply client format
+    err = ExtAudioFileSetProperty(audioFileRef, kExtAudioFileProperty_ClientDataFormat, sizeof(clientFormat), &clientFormat);
+    CHECK_ERROR_MSG_RET_NO(err,"ExtAudioFileSetProperty kExtAudioFileProperty_ClientDataFormat failed");
+    
+    if ( clientFormat.mChannelsPerFrame > audioFileFormat.mChannelsPerFrame ) {
+        // More channels in target format than file format - set up a map to duplicate channel
+        SInt32 channelMap[8];
+        AudioConverterRef converter;
+        UInt32 propSize = sizeof(converter);
+        ExtAudioFileGetProperty(audioFileRef, kExtAudioFileProperty_AudioConverter, &propSize, &converter);
+        for ( int outChannel=0, inChannel=0; outChannel < clientFormat.mChannelsPerFrame; outChannel++ ) {
+            channelMap[outChannel] = inChannel;
+            if ( inChannel+1 < audioFileFormat.mChannelsPerFrame ) inChannel++;
+        }
+        AudioConverterSetProperty(converter, kAudioConverterChannelMap, sizeof(SInt32)*clientFormat.mChannelsPerFrame, channelMap);
+        CFArrayRef config = NULL;
+        ExtAudioFileSetProperty(audioFileRef, kExtAudioFileProperty_ConverterConfig, sizeof(CFArrayRef), &config);
+    }
+    
+    
+    UInt64 packetCount;
+    propSize = sizeof(packetCount);
+    err = AudioFileGetProperty(audioFileID, kAudioFilePropertyAudioDataPacketCount, &propSize, &packetCount);
+    CHECK_ERROR(err,"AudioFileGetProperty kAudioFilePropertyAudioDataPacketCount failed");
+    
+
+    EAudioRenderBufferRecorder* recorder = [[EAudioRenderBufferRecorder alloc] init];
+    [recorder setup:audioFile AudioStreamFormat:clientFormat enableSynWrite:YES];
+    
+    UInt32 inNumberFrames = 1024;
+    AudioBufferList* audioBufferList = allocAudioBufferList(clientFormat,inNumberFrames);
+    while (true) {
+        
+        OSStatus status = ExtAudioFileRead(audioFileRef,
+                                            &inNumberFrames,
+                                            audioBufferList);
+        CHECK_ERROR_MSG_RET_NO(status,"ExtAudioFileRead audioFileRef failed");
+
+        if (inNumberFrames == 0) {
+            break;
+        }
+        [recorder pushAudioBuffer:0 AudioTimeStamp:0 inBusNumber:0 inNumberFrames:inNumberFrames AudioBufferList:audioBufferList];
+    }
+    [recorder close];
+    return true;
+    
 }
 
 

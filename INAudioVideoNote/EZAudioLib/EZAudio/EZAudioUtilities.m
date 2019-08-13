@@ -681,8 +681,7 @@ BOOL __shouldExitOnCheckResultFail = YES;
     {
         return;
     }
-    
-    //
+
     // Update the scroll history datasource
     //
     TPCircularBufferProduceBytes(&historyInfo->circularBuffer, buffer, bufferSize * sizeof(float));

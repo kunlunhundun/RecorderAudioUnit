@@ -38,6 +38,7 @@
     _path = path;
     _audioFormat = audioStreamFormat;
     _openForRead = NO;
+    _frameCount = 0;
 
     [self resetFileHandle];
 
@@ -71,6 +72,7 @@
     _openForRead = YES;
     _fileHandle = [NSFileHandle fileHandleForReadingAtPath:path];
     _fileEndPos = 0;
+    _frameCount = 0;
     if (_fileHandle != nil)
     {
         [self readPCMHeader];
@@ -106,6 +108,35 @@
     return self;
 }
 
+-(instancetype)initWithPathForReadWrite:(NSString*)path AudioStreamFormat:(AudioStreamBasicDescription)clientFormat{
+    
+    self = [super init ];
+    _path = path;
+    _audioFormat = clientFormat;
+    _clientFormat = clientFormat;
+    _openForRead = true;
+     [self close];
+    if (_audioFormat.mFormatFlags & kAudioFormatFlagIsNonInterleaved) {
+        _operationQueue = [[NSOperationQueue alloc] init];
+        _operationQueue.maxConcurrentOperationCount = 1;
+        _operationQueue.name = @"EAudioPcmFile queue";
+        [[NSFileManager defaultManager] createFileAtPath:_path contents:nil attributes:nil];
+        _tempBufferSize = 2 * _audioFormat.mSampleRate * _audioFormat.mBytesPerFrame * _audioFormat.mChannelsPerFrame;
+        _tempBuffer = malloc(_tempBufferSize);
+        _fileHandle = [NSFileHandle fileHandleForUpdatingAtPath:_path];
+        if (_fileHandle != nil) {
+            [self writePCMHeader];;
+        }
+        
+    }else{
+        NSLog(@"warning AudioPcmFile not support!!!");
+    }
+    
+    return self;
+}
+
+
+
 
 -(void)dealloc
 {
@@ -136,9 +167,11 @@
     if (!_openForRead) {
         return 0;
     }
-
-     int frameRead = 0;
     
+     int frameRead = 0;
+    if ( _frameCount > 0 &&  _offset >= _frameCount) {
+        return 0;
+    }
     // test_bug_auto
     @autoreleasepool {
         int size = inNumberFrames * _audioFormat.mBytesPerFrame * _audioFormat.mChannelsPerFrame;
@@ -249,6 +282,63 @@
         NSLog(@"EAudioPcmFile writeData error,not support this audioFormat");
     }
 }
+
+-(void)seekForReadWrite:(SInt64)frame isWrite:(BOOL)isWrite
+{
+    if (_fileHandle == nil ) {
+        return;
+    }
+    if (!isWrite) {
+        if (frame > _frameCount) {
+            frame = _frameCount;
+        }
+        UInt64 pos = _audioFormat.mBytesPerFrame * frame * _audioFormat.mChannelsPerFrame + HEADER_LENGTH;
+        UInt64 endPos =  [_fileHandle seekToEndOfFile];
+        if (pos <= endPos) {
+            [_fileHandle seekToFileOffset:pos];
+        }
+        return ;
+    }
+    NSBlockOperation* operation;
+    if (frame <= _frameCount) {
+        if (frame < 0 ){
+            frame = 0;
+        }
+        operation = [NSBlockOperation blockOperationWithBlock:^{
+            UInt64 pos = _audioFormat.mChannelsPerFrame * _audioFormat.mBytesPerFrame * frame + HEADER_LENGTH;
+            [_fileHandle seekToFileOffset:pos];
+            [_fileHandle truncateFileAtOffset:pos];
+            _frameCount = frame;
+            
+        }];
+    }else{
+        UInt64 blankFrameCount = frame - _frameCount;
+        UInt64 size = blankFrameCount * _audioFormat.mBytesPerFrame * _audioFormat.mChannelsPerFrame;
+        operation = [NSBlockOperation blockOperationWithBlock:^{
+            void* zero = malloc( size);
+            memset(zero, 0, size);
+            NSData* data = [NSData dataWithBytesNoCopy:zero length:size];
+            [_fileHandle writeData:data];
+            _frameCount = _frameCount + blankFrameCount;
+            
+        }];
+    }
+    
+    [_operationQueue addOperation:operation];
+}
+
+-(void)seekFileEnd{
+    if (_fileHandle) {
+        [_fileHandle seekToEndOfFile];
+    }
+}
+-(void)seekFileStart{
+    if (_fileHandle) {
+        [_fileHandle seekToFileOffset:HEADER_LENGTH];
+    }
+    _offset = 0;
+}
+
 
 -(void)seek:(SInt64)frame
 {
@@ -365,10 +455,11 @@
             break;
         }
     }
-    
     [pcm close];
     [recorder close];
     
 }
+
+
 
 @end

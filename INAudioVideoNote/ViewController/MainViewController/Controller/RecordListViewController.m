@@ -33,6 +33,7 @@
     [super viewDidAppear:animated];
     if (_isFirstLoad == false) {
         NSArray *dataArr =  [FilePathManager getArchiverModel];
+        _recordDataArr = dataArr;
         [_listView updateTableViewData:dataArr];
         _recordDataArr = dataArr;
     }

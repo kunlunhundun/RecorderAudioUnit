@@ -248,4 +248,11 @@ typedef struct
 
 //------------------------------------------------------------------------------
 
+/**
+ 自定义默认绘制的点初始化为0，到真正开始绘制的点是从末尾开始
+ */
+-(void)initDefaultBuffer;
+
+- (void)updateBuffer:(float *)buffer withBufferRMSSize:(UInt32)bufferSize;
+
 @end

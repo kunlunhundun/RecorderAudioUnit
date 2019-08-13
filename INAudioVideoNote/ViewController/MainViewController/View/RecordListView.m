@@ -47,6 +47,7 @@
 }
 
 -(void)updateTableViewData:(NSArray*)dataArr{
+    [_dataArr removeAllObjects];
     [_dataArr addObjectsFromArray:dataArr];
     [_tableView reloadData];
 }
@@ -71,7 +72,7 @@
     }
     AudioInfoModel *infoModel = _dataArr[indexPath.row];
     cell.dateTimeLab.text = infoModel.dateTime;
-
+    
     NSString *fileName =  infoModel.fileName;//_dataArr[indexPath.row];
     NSInteger dateTimeCount =  [FilePathManager getAudiodurationTimer:fileName];
     NSInteger minutes = dateTimeCount / 60;
@@ -86,7 +87,18 @@
     NSString *directPath = [FilePathManager getAudioFileRecordPath];
     NSString *filePathName = [NSString stringWithFormat:@"%@%@",directPath,fileName];
     NSInteger fileSize = [FilePathManager getFileSize:filePathName];
-    cell.nameLab.text = [NSString stringWithFormat:@"%@(%ld k)",fileName,fileSize];
+    if (fileSize > 1000) {
+        CGFloat mfileSize = (CGFloat)fileSize / (CGFloat)1024 ;
+        cell.sizeLab.text = [NSString stringWithFormat:@"%.2f %@",mfileSize,@"MB"];
+    }else{
+        cell.sizeLab.text = [NSString stringWithFormat:@"%ld %@",fileSize,@"kb"];
+    }
+    cell.nameLab.text = fileName;
+    cell.flagLab.text = @"0";
+    if (infoModel.markTime.length > 0) {
+        NSArray *markTimeArr =  [infoModel.markTime componentsSeparatedByString:@","];
+        cell.flagLab.text = [NSString stringWithFormat:@"%ld",markTimeArr.count];
+    }
     if (_isEdit) {
         cell.renameBtn.hidden = false;
         cell.deleteBtn.hidden = false;
@@ -115,7 +127,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    return (_isEdit ? 74+40 : 74 ) ;
+    return (_isEdit ? 74+10+40 : 74+15 ) ;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{

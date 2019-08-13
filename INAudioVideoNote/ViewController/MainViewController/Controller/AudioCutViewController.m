@@ -37,7 +37,7 @@
 @property(nonatomic,assign) NSTimeInterval endTime;
 
 @property (nonatomic, strong) UIActivityIndicatorView * activityIndicator;
-
+@property(nonatomic,strong) EAudioFileRecorder *readFileRecorder;
 
 @end
 
@@ -90,13 +90,27 @@
     self.startTime = 0;
     self.endTime = durationCount;
    
-    UInt64 count = 44100*durationCount/1024;
-    if (count > 512) {
-        
+    int count = 44100*durationCount/1024;
+    if (count > 8192) {
+        count = 8192;
     }
-    [self updateBuffer:outFloatData index:0];
+    __weak typeof (self) weakSelf = self;
+    EAudioFileRecorder *readFileRecorder = [[EAudioFileRecorder alloc] init];
+    _readFileRecorder = readFileRecorder;
+    _readFileRecorder.eaudioReadFileOutputBlock = ^(float * _Nonnull data, UInt32 numFrames) {
+        [weakSelf.audioPlotGLView updateBuffer:data withBufferRMSSize:numFrames];
+
+    };
+    [_audioPlotGLView setRollingHistoryLength:count];
+
+    NSString *filePath = [FilePathManager  getAudioFileRecordPath];
+    NSString *filePathName = [NSString stringWithFormat:@"%@%@",filePath,_fileName];
+    [readFileRecorder openExAudioFile:filePathName bufferSize:count];
+    
  
 }
+
+
 
 -(void)updateBuffer:(float*)outFloatData index:(NSInteger)index{
     
@@ -114,6 +128,9 @@
         outFloatData[1] = 0.025;
         outFloatData[0] = 0.020;
     }
+    
+    
+    
     __weak typeof (self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         
@@ -127,8 +144,6 @@
     });
     
 }
-
-
 -(void)setupSliderView{
     
     UIView *maskView = [[UIView alloc]initWithFrame:CGRectZero];
@@ -386,6 +401,7 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             if (isSuccess == true) {
                 [weakSelf.activityIndicator stopAnimating];
+                [self.navigationController popViewControllerAnimated:true];
             }
         });
     });
@@ -396,6 +412,7 @@
     [self stopPlay];
     [self.navigationController popViewControllerAnimated:true];
 }
+
 
 - (void)startTimer {
     if (!_timer) {

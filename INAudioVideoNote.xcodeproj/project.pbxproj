@@ -16,6 +16,7 @@
 		6212404E22F0343C00C2F0CE /* AudioInfoModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 6212404D22F0343C00C2F0CE /* AudioInfoModel.m */; };
 		6212405122F15A9D00C2F0CE /* PopTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6212405022F15A9D00C2F0CE /* PopTableView.m */; };
 		6212405422F17E1A00C2F0CE /* ContinueRecordViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6212405322F17E1A00C2F0CE /* ContinueRecordViewController.m */; };
+		6268F34323015BC600FA5391 /* ConvertPopView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6268F34223015BC600FA5391 /* ConvertPopView.m */; };
 		62A4FE6E22E859C800423E89 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 62A4FE6D22E859C800423E89 /* libc++.tbd */; };
 		62C1E49C22E85ED30037D4A3 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 62C1E2F022E85ED10037D4A3 /* AppDelegate.m */; };
 		62C1E49D22E85ED30037D4A3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 62C1E2F122E85ED10037D4A3 /* Assets.xcassets */; };
@@ -81,6 +82,8 @@
 		6212405022F15A9D00C2F0CE /* PopTableView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PopTableView.m; sourceTree = "<group>"; };
 		6212405222F17E1A00C2F0CE /* ContinueRecordViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ContinueRecordViewController.h; sourceTree = "<group>"; };
 		6212405322F17E1A00C2F0CE /* ContinueRecordViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ContinueRecordViewController.m; sourceTree = "<group>"; };
+		6268F34123015BC600FA5391 /* ConvertPopView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ConvertPopView.h; sourceTree = "<group>"; };
+		6268F34223015BC600FA5391 /* ConvertPopView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ConvertPopView.m; sourceTree = "<group>"; };
 		62A4FC4B22E8556500423E89 /* INAudioVideoNote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = INAudioVideoNote.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		62A4FE6D22E859C800423E89 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		62A4FE6F22E85AD300423E89 /* EAudioKit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = EAudioKit.xcodeproj; path = INAudioVideoNote/AudioKitLib/EAudioKit.xcodeproj; sourceTree = "<group>"; };
@@ -232,8 +235,8 @@
 				62F2A95022EC415F003525E6 /* PlayAudioViewController.m */,
 				6212405222F17E1A00C2F0CE /* ContinueRecordViewController.h */,
 				6212405322F17E1A00C2F0CE /* ContinueRecordViewController.m */,
-				62CCDDB622F924D700CFFB0F /* AudioCutViewController.h */,
 				62CCDDB722F924D700CFFB0F /* AudioCutViewController.m */,
+				62CCDDB622F924D700CFFB0F /* AudioCutViewController.h */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -253,6 +256,8 @@
 				620B9B5122FAF08000AFCFBA /* MarkCollectionView.m */,
 				620B9B5322FAF0AA00AFCFBA /* MarkCollectionViewCell.h */,
 				620B9B5422FAF0AA00AFCFBA /* MarkCollectionViewCell.m */,
+				6268F34123015BC600FA5391 /* ConvertPopView.h */,
+				6268F34223015BC600FA5391 /* ConvertPopView.m */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -453,6 +458,7 @@
 				62C1E49C22E85ED30037D4A3 /* AppDelegate.m in Sources */,
 				62C1E50522E85ED30037D4A3 /* main.m in Sources */,
 				6212404E22F0343C00C2F0CE /* AudioInfoModel.m in Sources */,
+				6268F34323015BC600FA5391 /* ConvertPopView.m in Sources */,
 				62F2A92122E957CD003525E6 /* RecordMainViewController.m in Sources */,
 				620B9B5222FAF08000AFCFBA /* MarkCollectionView.m in Sources */,
 				62F2A94E22EC25EC003525E6 /* CustomImgLabBtn.m in Sources */,

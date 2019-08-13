@@ -32,4 +32,10 @@
 
 +(void)pcmToAudioFile:(NSString*)pcmFile targetAudioFile:(NSString*)audioFile;
 
+-(instancetype)initWithPathForReadWrite:(NSString*)path AudioStreamFormat:(AudioStreamBasicDescription)clientFormat;
+
+-(void)seekFileEnd;
+-(void)seekFileStart;
+
+
 @end

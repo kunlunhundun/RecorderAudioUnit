@@ -35,6 +35,7 @@
 @property(nonatomic,strong) MarkCollectionView *markCollectionView;
 @property(nonatomic,strong) NSMutableSet *markTimeSet;
 @property(nonatomic,assign) NSTimeInterval durationTime;
+@property(nonatomic,strong) UIView  *plotGLBackView;
 
 @end
 
@@ -62,12 +63,22 @@
 }
 
 -(void)initAudioPlotGL{
-    _audioPlotGLView = [[EZAudioPlotGL alloc]initWithFrame:CGRectZero];
-    [self.view addSubview:_audioPlotGLView];
-    [_audioPlotGLView mas_makeConstraints:^(MASConstraintMaker *make) {
+    
+    UIView *plotGLBackView = [[UIView alloc]initWithFrame:CGRectZero];
+    [self.view addSubview:plotGLBackView];
+    _plotGLBackView = plotGLBackView;
+    plotGLBackView.backgroundColor = UIColorFromRGB(0x151515);
+    [plotGLBackView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.equalTo(self.view);
         make.top.equalTo(self.view).offset(0);
         make.height.mas_equalTo(220);
+    }];
+    
+    _audioPlotGLView = [[EZAudioPlotGL alloc]initWithFrame:CGRectZero];
+    [plotGLBackView addSubview:_audioPlotGLView];
+    [_audioPlotGLView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.top.bottom.equalTo(plotGLBackView);
+        make.width.mas_equalTo(IN_IPHONE_WIDTH/2);
     }];
     _audioPlotGLView.backgroundColor = UIColorFromRGB(0x151515);
     _audioPlotGLView.color           =  UIColorFromRGB(0xFF5700);
@@ -75,6 +86,23 @@
     _audioPlotGLView.shouldFill      = YES;
     _audioPlotGLView.shouldMirror    = YES;
     _audioPlotGLView.gain = 2.5f;
+    
+    UIView *midHorLineView = [[UIView alloc]initWithFrame:CGRectZero];
+    [plotGLBackView addSubview:midHorLineView];
+    midHorLineView.backgroundColor = UIColorFromRGB(0x3C3226);
+    [midHorLineView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.equalTo(plotGLBackView);
+        make.height.mas_equalTo(1);
+        make.centerY.equalTo(plotGLBackView.mas_centerY);
+    }];
+    UIView *midVerLineView = [[UIView alloc]initWithFrame:CGRectZero];
+    [plotGLBackView addSubview:midVerLineView];
+    midVerLineView.backgroundColor = UIColorFromRGB(0xFF5700);
+    [midVerLineView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.bottom.top.equalTo(plotGLBackView);
+        make.centerX.equalTo(plotGLBackView.mas_centerX);
+        make.width.mas_equalTo(1);
+    }];
 }
 
 
@@ -108,7 +136,7 @@
     markCollectionView.backgroundColor = UIColorFromRGB(0x1A1A1C);
     [markCollectionView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.equalTo(self.view);
-        make.top.equalTo(self.audioPlotGLView.mas_bottom).offset(0);
+        make.top.equalTo(self.plotGLBackView.mas_bottom).offset(0);
         make.height.mas_equalTo(40);
     }];
     _markCollectionView = markCollectionView;
@@ -369,7 +397,6 @@
                             }
                             infoModel.markTime = [NSString stringWithFormat:@"%@%@",oldMarkTime,markStr];
                         }
-                        
                     }
                 }
                 [FilePathManager updateArchiverModel:[NSMutableArray arrayWithArray:dataArr]];
@@ -378,6 +405,7 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             if (status == true) {
                 [weakSelf.activityIndicator stopAnimating];
+                [self.navigationController popViewControllerAnimated:true];
             }
         });
     });

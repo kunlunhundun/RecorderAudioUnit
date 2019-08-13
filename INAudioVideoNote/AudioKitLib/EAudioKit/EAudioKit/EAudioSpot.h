@@ -72,6 +72,10 @@ typedef void (^EAudioSpotOutputBlock)(float  *data, UInt32 numFrames, UInt32 num
 
 -(void)startRecordRaw:(NSString*)savePath partFlag:(BOOL)partFlag;
 
+//设置试听阶段还是录音阶段
+-(void)pauseRowRecordForPlay:(BOOL)isPause;
+
+-(void)startRecordRawReadWrite:(NSString*)savePath;
 /**
  支持 wav mp3 m4a 格式录音
  */

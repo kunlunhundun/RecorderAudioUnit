@@ -54,7 +54,7 @@
     
     
     CGFloat width = 100;
-    UIView *backView = [[UIView alloc]initWithFrame:CGRectMake(30, STATUS_NAVI_HEIGHT+50, width, 105)];
+    UIView *backView = [[UIView alloc]initWithFrame:CGRectMake(30+150+5, STATUS_NAVI_HEIGHT+50, width, 105)];
     backView.backgroundColor = [UIColor whiteColor];
     [self.maskView addSubview:backView];
     backView.backgroundColor = UIColorFromRGB(0x4A4A4A);

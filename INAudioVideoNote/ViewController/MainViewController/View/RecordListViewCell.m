@@ -78,7 +78,7 @@
     [dateTimeLab mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.equalTo(voiceImgView.mas_right).offset(5);
         make.top.equalTo(nameLab.mas_bottom).offset(3);
-        make.height.mas_equalTo(26);
+        make.height.mas_equalTo(20);
         make.right.equalTo(self).offset(90);
     }];
     _dateTimeLab = dateTimeLab;
@@ -94,6 +94,42 @@
         make.centerY.equalTo(dateTimeLab.mas_centerY);
     }];
     
+    UILabel *sizeLab = [[UILabel alloc]initWithFrame:CGRectZero];
+    [self.contentView addSubview:sizeLab];
+    _sizeLab = sizeLab;
+    sizeLab.textColor = UIColorFromRGB(0x6D6E71);
+    sizeLab.textAlignment = NSTextAlignmentLeft;
+    sizeLab.font = [UIFont systemFontOfSize:16];
+    [sizeLab mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(dateTimeLab.mas_left);
+        make.width.mas_equalTo(72);
+        make.height.mas_equalTo(20);
+        make.top.equalTo(dateTimeLab.mas_bottom).offset(5);
+    }];
+    
+    UILabel *flagLab = [[UILabel alloc]initWithFrame:CGRectZero];
+    [self.contentView addSubview:flagLab];
+    flagLab.textColor = UIColorFromRGB(0x6D6E71);
+    flagLab.text = @"0";
+    _flagLab = flagLab;
+    flagLab.textAlignment = NSTextAlignmentRight;
+    flagLab.font = [UIFont systemFontOfSize:16];
+    [flagLab mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.equalTo(self).offset(-15-20);
+        make.width.mas_equalTo(72);
+        make.height.mas_equalTo(20);
+        make.top.equalTo(sizeLab.mas_top);
+    }];
+    UIImageView *flagImgView = [[UIImageView alloc]initWithFrame:CGRectZero];
+    flagImgView.image = [UIImage imageNamed:@"in_icon_flag"];
+    [self.contentView addSubview:flagImgView];
+    [flagImgView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.equalTo(self).offset(-15);
+        make.centerY.equalTo(flagLab.mas_centerY);
+        make.width.mas_equalTo(15);
+        make.height.mas_equalTo(16);
+    }];
+    
     CustomImgLabBtn *renameBtn = [[CustomImgLabBtn alloc]initWithFrame:CGRectMake(0, 0, 80, 40)];
     [self.contentView addSubview:renameBtn];
     [renameBtn setImage:[UIImage imageNamed:@"in_icon_rename"] forState:UIControlStateNormal];
@@ -105,7 +141,7 @@
 
     [renameBtn mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.equalTo(self).offset(-120);
-        make.top.equalTo(self).offset(74);
+        make.top.equalTo(self).offset(74+10);
         make.width.mas_equalTo(80);
         make.height.mas_equalTo(40);
     }];
@@ -119,7 +155,7 @@
     [deleteBtn addTarget:self action:@selector(deleteAction) forControlEvents:UIControlEventTouchUpInside];
     [deleteBtn mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.equalTo(self).offset(-28);
-        make.top.equalTo(self).offset(74);
+        make.top.equalTo(self).offset(74+10);
         make.width.mas_equalTo(70);
         make.height.mas_equalTo(40);
     }];
