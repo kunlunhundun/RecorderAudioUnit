@@ -102,7 +102,7 @@
     sizeLab.font = [UIFont systemFontOfSize:16];
     [sizeLab mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.equalTo(dateTimeLab.mas_left);
-        make.width.mas_equalTo(72);
+        make.width.mas_equalTo(100);
         make.height.mas_equalTo(20);
         make.top.equalTo(dateTimeLab.mas_bottom).offset(5);
     }];

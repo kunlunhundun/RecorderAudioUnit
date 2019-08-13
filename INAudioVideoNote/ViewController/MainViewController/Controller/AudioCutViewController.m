@@ -91,17 +91,21 @@
     self.endTime = durationCount;
    
     int count = 44100*durationCount/1024;
-    if (count > 8192) {
-        count = 8192;
+    if (count > 2048) {
+      //  count = 8192;
+        count = 2048;
     }
+    
     __weak typeof (self) weakSelf = self;
     EAudioFileRecorder *readFileRecorder = [[EAudioFileRecorder alloc] init];
     _readFileRecorder = readFileRecorder;
+    
     _readFileRecorder.eaudioReadFileOutputBlock = ^(float * _Nonnull data, UInt32 numFrames) {
-        [weakSelf.audioPlotGLView updateBuffer:data withBufferRMSSize:numFrames];
-
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf.audioPlotGLView updateBuffer:data withBufferRMSSize:numFrames];
+        });
     };
-    [_audioPlotGLView setRollingHistoryLength:count];
+    [_audioPlotGLView setRollingHistoryLength:count+2];
 
     NSString *filePath = [FilePathManager  getAudioFileRecordPath];
     NSString *filePathName = [NSString stringWithFormat:@"%@%@",filePath,_fileName];

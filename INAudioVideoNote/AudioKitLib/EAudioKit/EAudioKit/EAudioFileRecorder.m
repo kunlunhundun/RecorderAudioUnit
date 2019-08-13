@@ -459,6 +459,8 @@
 
     float emptyBuffer[1];
     emptyBuffer[0] = 0.0f;
+    float *tempBuffer = NULL;
+    
     while (1) {
         OSStatus status =  ExtAudioFileRead(audioFileRef,
                                             &framesCount,
@@ -466,13 +468,15 @@
         CHECK_ERROR_MSG_RET_NO(status,"ExtAudioFileRead audioFileRef failed");
         
         if (self.eaudioReadFileOutputBlock) {
-            if (_outFloatData == NULL ) {
+            if (_outFloatData == NULL || tempBuffer == NULL) {
                 _outFloatData = (float*)calloc(bufferSize, sizeof(float));
                 memset(_outFloatData, 0, sizeof(float)*bufferSize);
+                tempBuffer = (float*)calloc(inNumberFrames*4, sizeof(char));
+                memset(tempBuffer, 0, inNumberFrames*4);
             }
-          float sumBuffer = [self RMS:(float*)_readBufferList->mBuffers[0].mData length:_readBufferList->mBuffers[0].mDataByteSize/4];
+            memcpy(tempBuffer, _readBufferList->mBuffers[0].mData, _readBufferList->mBuffers[0].mDataByteSize);
+            float sumBuffer = [self RMS:(float*)tempBuffer length:inNumberFrames];
             readCount ++ ;
-           // memcpy(_outFloatData, _readBufferList->mBuffers[0].mData, _readBufferList->mBuffers[0].mDataByteSize);
             if (readCount < bufferSize) {
                 _outFloatData[readCount] = isnan(sumBuffer) ? 0.0 : sumBuffer;;
             }else{
